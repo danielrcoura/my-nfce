@@ -1,0 +1,153 @@
+var barCount = 60;
+var initialDateStr = '01 Apr 2017 00:00 Z';
+
+var ctx = document.getElementById('chart').getContext('2d');
+ctx.canvas.width = 1000;
+ctx.canvas.height = 250;
+
+var barData = getMyData();
+console.log(barData)
+function lineData() { return barData.map(d => { return { x: d.x, y: d.c} }) };
+
+function getMyData() {
+	return [
+		{ x: 1673185647000, o: 31.98, h: 31.98+1, l: 31.98, c: 31.98 },
+		{ x: 1673185647000, o: 31.98, h: 31.98+1, l: 31.98, c: 31.98 },
+		{ x: 1673185647000, o: 31.98, h: 31.98+1, l: 31.98, c: 31.98 },
+		{ x: 1676741166000, o: 27.9, h: 27.9+1, l: 27.9, c: 27.9 },
+		{ x: 1676741166000, o: 27.9, h: 27.9+1, l: 27.9, c: 27.9 },
+		{ x: 1677956086000, o: 28.98, h: 28.98+1, l: 28.98, c: 28.98 },
+		{ x: 1682174408000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1682174408000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1682174408000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1682174408000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1682174408000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1682174408000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1680894268000, o: 29.98, h: 29.98+1, l: 29.98, c: 29.98 },
+		{ x: 1680894268000, o: 29.98, h: 29.98+1, l: 29.98, c: 29.98 },
+		{ x: 1682776207000, o: 30.98, h: 30.98+1, l: 30.98, c: 30.98 },
+		{ x: 1683891283000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1683399795000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1685100511000, o: 36.04, h: 36.04+1, l: 36.04, c: 36.04 },
+		{ x: 1685100511000, o: 36.04, h: 36.04+1, l: 36.04, c: 36.04 },
+		{ x: 1686311326000, o: 34.98, h: 34.98+1, l: 34.98, c: 34.98 },
+		{ x: 1686311326000, o: 34.98, h: 34.98+1, l: 34.98, c: 34.98 },
+		{ x: 1690051182000, o: 34.98, h: 34.98+1, l: 34.98, c: 34.98 },
+		{ x: 1686311326000, o: 34.98, h: 34.98+1, l: 34.98, c: 34.98 },
+		{ x: 1686311326000, o: 34.98, h: 34.98+1, l: 34.98, c: 34.98 },
+		{ x: 1688125489000, o: 34.98, h: 34.98+1, l: 34.98, c: 34.98 },
+		{ x: 1683891283000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1685100511000, o: 36.04, h: 36.04+1, l: 36.04, c: 36.04 },
+		{ x: 1685100511000, o: 36.04, h: 36.04+1, l: 36.04, c: 36.04 },
+		{ x: 1683399795000, o: 34.99, h: 34.99+1, l: 34.99, c: 34.99 },
+		{ x: 1691753828000, o: 34.98, h: 34.98+1, l: 34.98, c: 34.98 }
+	]
+}
+
+var chart = new Chart(ctx, {
+	type: 'candlestick',
+	data: {
+		datasets: [{
+			label: 'CHRT - Chart.js Corporation',
+			data: barData
+		}]
+	}
+});
+
+var getRandomInt = function(max) {
+	return Math.floor(Math.random() * Math.floor(max));
+};
+
+function randomNumber(min, max) {
+	return Math.random() * (max - min) + min;
+}
+
+function randomBar(date, lastClose) {
+	var open = +randomNumber(lastClose * 0.95, lastClose * 1.05).toFixed(2);
+	var close = +randomNumber(open * 0.95, open * 1.05).toFixed(2);
+	var high = +randomNumber(Math.max(open, close), Math.max(open, close) * 1.1).toFixed(2);
+	var low = +randomNumber(Math.min(open, close) * 0.9, Math.min(open, close)).toFixed(2);
+	return {
+		x: date.valueOf(),
+		o: open,
+		h: high,
+		l: low,
+		c: close
+	};
+
+}
+
+function getRandomData(dateStr, count) {
+	var date = luxon.DateTime.fromRFC2822(dateStr);
+	var data = [randomBar(date, 30)];
+	while (data.length < count) {
+		date = date.plus({days: 1});
+		if (date.weekday <= 5) {
+			data.push(randomBar(date, data[data.length - 1].c));
+		}
+	}
+	return data;
+}
+
+var update = function() {
+	var dataset = chart.config.data.datasets[0];
+
+	// candlestick vs ohlc
+	var type = document.getElementById('type').value;
+	dataset.type = type;
+
+	// linear vs log
+	var scaleType = document.getElementById('scale-type').value;
+	chart.config.options.scales.y.type = scaleType;
+
+	// color
+	var colorScheme = document.getElementById('color-scheme').value;
+	if (colorScheme === 'neon') {
+		dataset.color = {
+			up: '#01ff01',
+			down: '#fe0000',
+			unchanged: '#999',
+		};
+	} else {
+		delete dataset.color;
+	}
+
+	// border
+	var border = document.getElementById('border').value;
+	var defaultOpts = Chart.defaults.elements[type];
+	if (border === 'true') {
+		dataset.borderColor = defaultOpts.borderColor;
+	} else {
+		dataset.borderColor = {
+			up: defaultOpts.color.up,
+			down: defaultOpts.color.down,
+			unchanged: defaultOpts.color.up
+		};
+	}
+
+	// mixed charts
+	var mixed = document.getElementById('mixed').value;
+	if(mixed === 'true') {
+		chart.config.data.datasets = [
+			{
+				label: 'CHRT - Chart.js Corporation',
+				data: barData
+			},
+			{
+				label: 'Close price',
+				type: 'line',
+				data: lineData()
+			}	
+		]
+	}
+	else {
+		chart.config.data.datasets = [
+			{
+				label: 'CHRT - Chart.js Corporation',
+				data: barData
+			}	
+		]
+	}
+
+	chart.update();
+};
