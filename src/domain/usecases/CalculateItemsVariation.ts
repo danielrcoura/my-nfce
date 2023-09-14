@@ -6,6 +6,7 @@ type Variation = {
     newTotal: number
     variation: number
     percentage: number
+    missing: string[]
 }
 
 export default class CalculateItemsVartiationUsecase {
@@ -16,18 +17,24 @@ export default class CalculateItemsVartiationUsecase {
         const oldDate = this.subtractMonths(itemsPrices.date, months)
         const oldItemsPrices = this.itemsRepo.getMonthMedianItemsPrices(itemsNames, oldDate)
         
+        const missing: string[] = []
         let oldTotal = 0
         let newTotal = 0
 
-        Object.keys(oldItemsPrices.prices).forEach(item => {
-            oldTotal += oldItemsPrices.prices[item]
-            newTotal += itemsPrices.prices[item]
+        itemsNames.forEach(item => {
+            const oldItemPrice = oldItemsPrices.prices[item]
+            if (oldItemPrice) {
+                oldTotal += oldItemPrice
+                newTotal += itemsPrices.prices[item]
+            } else {
+                missing.push(item)
+            }
         })
 
         const variation = newTotal - oldTotal
         const percentage = variation / oldTotal
 
-        return { oldTotal, newTotal, variation, percentage }
+        return { oldTotal, newTotal, variation, percentage, missing }
     }
 
     subtractMonths(date: Date, months: number): Date {

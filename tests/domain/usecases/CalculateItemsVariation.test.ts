@@ -27,7 +27,8 @@ describe('CalculateItemsVariation', () => {
       oldTotal: 8,
       newTotal: 10,
       variation: 2,
-      percentage: 0.25
+      percentage: 0.25,
+      missing: []
     })
   });
 
@@ -47,7 +48,8 @@ describe('CalculateItemsVariation', () => {
       oldTotal: 10,
       newTotal: 15,
       variation: 5,
-      percentage: 0.5
+      percentage: 0.5,
+      missing: []
     })
   });
 
@@ -67,7 +69,8 @@ describe('CalculateItemsVariation', () => {
       oldTotal: 8,
       newTotal: 10,
       variation: 2,
-      percentage: 0.25
+      percentage: 0.25,
+      missing: ['produto2']
     })
   });
 
