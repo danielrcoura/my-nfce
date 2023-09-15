@@ -1,7 +1,7 @@
 import cheerio from 'cheerio'
 import FiscalNoteExtractor from "../domain/interfaces/FiscalNoteExtractor";
 
-export default class MyFiscalNoteExtractor implements FiscalNoteExtractor {
+export default class FiscalNoteCheerioExtractor implements FiscalNoteExtractor {
     extract(html: Buffer) {
         const $ = cheerio.load(html);
         const table = $('#tbItensList')

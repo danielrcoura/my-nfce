@@ -1,9 +1,9 @@
 import fs from 'fs'
-import HtmlFetcher from '../domain/interfaces/HtmlFetcher'
+import FiscalNoteFetcher from '../domain/interfaces/FiscalNoteFetcher'
 
 const BASE_DIR='/home/satoshi/Documents/mercado-exchange/raw-notes'
 
-export default class FsHtmlFetcher implements HtmlFetcher {
+export default class FiscalNoteFsFetcher implements FiscalNoteFetcher {
     fetch(url: string): Promise<Buffer> {
         const nfceId = this.getNfceId(url)
         const path = `${BASE_DIR}/${nfceId}.html`
