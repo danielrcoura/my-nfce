@@ -1,4 +1,4 @@
-import FsHtmlFetcher from '../../src/html-fetcher/FsHtmlFetcher'
+import FsHtmlFetcher from '../../src/scraper/FsHtmlFetcher'
 
 describe('FsHtmlFetcher', () => {
   it('should fetch a file by url', async () => {

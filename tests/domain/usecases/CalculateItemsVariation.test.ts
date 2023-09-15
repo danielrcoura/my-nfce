@@ -7,7 +7,7 @@ describe('CalculateItemsVariation', () => {
   let itemsRepo: ItemsRepo
 
   beforeEach(() => {
-    itemsRepo = { getMonthMedianItemsPrices: jest.fn() }
+    const itemsRepo = { getMonthMedianItemsPrices: jest.fn() }
     calculateFiscalNoteVartiationUsecase = new CalculateFiscalNoteVartiationUsecase(itemsRepo);
   });
 
