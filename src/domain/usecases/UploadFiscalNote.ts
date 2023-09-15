@@ -1,13 +1,17 @@
-import fiscalNoteExtractor from '../interfaces/FiscalNoteExtractor'
-import HtmlFetcher from '../interfaces/FiscalNoteFetcher'
+import FiscalNoteFetcher from '../interfaces/FiscalNoteFetcher'
+import FiscalNoteExtractor from '../interfaces/FiscalNoteExtractor'
+import ItemsRepo from '../interfaces/ItemsRepo'
 
 export default class UploadFiscalNoteUsecase {
-    constructor(private htmlFetcher: HtmlFetcher, private fiscalNoteExtractor: fiscalNoteExtractor) {}
+    constructor(
+        private htmlFetcher: FiscalNoteFetcher,
+        private fiscalNoteExtractor: FiscalNoteExtractor,
+        private itemsRepo: ItemsRepo
+    ) {}
 
-    async exec(url: string) {
+    async exec(url: string): Promise<void> {
         const html = await this.htmlFetcher.fetch(url)
-        // TODO: save html
         const fiscalNote = this.fiscalNoteExtractor.extract(html)
-        // TODO: save in DB
+        return this.itemsRepo.save(fiscalNote)
     }
 }
