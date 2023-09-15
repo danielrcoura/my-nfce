@@ -1,4 +1,4 @@
-import { ItemsPrices } from "../dto/ItemsPrices"
+import { ItemsPrices } from "../entities/FiscalNote";
 
 export default interface ItemsRepo {
     getMonthMedianItemsPrices(items: string[], date: Date): ItemsPrices

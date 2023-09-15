@@ -13,7 +13,7 @@ export default class FiscalNote {
     getItemsPrices() {
         const itemsPrices: ItemsPrices = {}
         return this.items.reduce((result, item) => {
-            result[item.name] = result.price
+            result[item.name] = item.price
             return result
         }, itemsPrices)
     }
