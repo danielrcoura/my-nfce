@@ -1,61 +1,64 @@
-import cheerio from 'cheerio'
+import cheerio, { CheerioAPI } from 'cheerio'
 import FiscalNoteExtractor from "../domain/interfaces/FiscalNoteExtractor";
+import FiscalNote from '../domain/entities/FiscalNote';
 
 export default class FiscalNoteCheerioExtractor implements FiscalNoteExtractor {
-    extract(html: Buffer) {
+    extract(html: Buffer): FiscalNote {
         const $ = cheerio.load(html);
-        const table = $('#tbItensList')
-        const rows = table.find('tr');
+        const date = this.extractDate($)
+        const table = this.extractTable($)
+        const cleanedTable = this.cleanTable(table)
+        return this.createFiscalNote(cleanedTable, date)
+    }
 
-        const tableData: any[][] = [];
+    private extractTable($: CheerioAPI): string[][] {
+        const tableElement = $('#tbItensList')
+        const rows = tableElement.find('tr');
+        
+        const table: string[][] = [];
 
-        rows.each((index, element) => {
+        rows.each((i, element) => {
             const columns = $(element).find('td');
             const rowData = columns.map((i, column) => $(column).text()).get();
-            tableData.push(rowData);
+            table.push(rowData);
         });
 
-        let cleanedTable = tableData.map(row => {
+        return table
+    }
+
+    private cleanTable(table: string[][]) {
+        let cleanedTable = table.map(row => {
             return row.map(item => {
-                const cleanedString = (item as string).replace(/^\s+/g, '');
+                const cleanedString = item.replace(/^\s+/g, '');
                 return cleanedString
             })
         })
         cleanedTable = cleanedTable.map(row => row.slice(1))
         cleanedTable = cleanedTable.slice(1)
+        return cleanedTable
+    }
 
-        function getDate () {
-            const rawDate = $('#lblDataEmissao').text()
-            const cleanedDate = rawDate.replace(/Data de Emissão: /g, '').replace(/\s$/, '')
-            const [datePart, timePart] = cleanedDate.split(" ");
-            const [day, month, year] = datePart.split("/");
-            const [hours, minutes, seconds] = timePart.split(":");
+    private extractDate($: CheerioAPI): Date {
+        const rawDate = $('#lblDataEmissao').text()
+        const cleanedDate = rawDate.replace(/Data de Emissão: /g, '').replace(/\s$/, '')
+        const [datePart, timePart] = cleanedDate.split(" ");
+        const [day, month, year] = datePart.split("/");
+        const [hours, minutes, seconds] = timePart.split(":");
 
-            const result = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-03:00`
-            return result
-        }
-        const resultWithDate: any[] = cleanedTable.map(row => [...row, getDate()])
+        const result = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}-03:00`
+        return new Date(result)
+    }
 
-        const formattedNumbers = resultWithDate.map(row => {
-            row[2] = parseFloat(row[2].replace(',', '.'))
-            row[4] = parseFloat(row[4].replace(',', '.'))
-            row[5] = parseFloat(row[5].replace(',', '.'))
-            return row
+    private createFiscalNote(table: string[][], date: Date): FiscalNote {
+        const items = table.map(row => {
+            const item = {
+                name: row[1],
+                quantity: parseFloat(row[2].replace(',', '.')),
+                unit: row[3],
+                price: parseFloat(row[5].replace(',', '.')),
+            }
+            return item
         })
-
-        const result = formattedNumbers.reduce((result, item) => {
-            result.push({
-                item: item[0],
-                description: item[1],
-                quantity: item[2],
-                unit: item[3],
-                unitValue: item[4],
-                totalValue: item[5],
-                date: item[6],
-            })
-            return result
-        }, [])
-
-        return result
+        return new FiscalNote(date, items)
     }
 }

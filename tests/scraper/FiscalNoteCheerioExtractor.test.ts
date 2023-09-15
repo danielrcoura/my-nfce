@@ -7,7 +7,7 @@ describe('FiscalNoteCheerioExtractor', () => {
     const fiscalNoteCheerioExtractor = new FiscalNoteCheerioExtractor()
 
     const fiscalNote = fiscalNoteCheerioExtractor.extract(html)
-    console.log(fiscalNote.slice(0,3))
+    console.log(fiscalNote.items.slice(0,3))
   });
 })
   
