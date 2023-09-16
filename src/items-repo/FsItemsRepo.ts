@@ -1,5 +1,5 @@
 import fs from 'fs'
-import FiscalNote, { Item, ItemsPrices } from "../domain/entities/FiscalNote";
+import FiscalNote, { ItemsPrices } from "../domain/entities/FiscalNote";
 import ItemsRepo from "../domain/interfaces/ItemsRepo";
 
 type DbItem = {
@@ -48,7 +48,11 @@ export default class FsItemsRepo implements ItemsRepo {
     }
     
     private getAll(): DbItem[] {
-        const buffer = fs.readFileSync(__dirname + '/database.json')
-        return JSON.parse(buffer.toString()) as DbItem[]
+        try {
+            const buffer = fs.readFileSync(__dirname + '/database.json')
+            return JSON.parse(buffer.toString()) as DbItem[]
+        } catch {
+            return []
+        }
     }
 }

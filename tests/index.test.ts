@@ -14,12 +14,12 @@ const uploadFiscalNoteUsecase = new UploadFiscalNoteUsecase(fiscalNoteScraper, f
 const calculateFiscalNoteVariationUsecase = new CalculateFiscalNoteVariationUsecase(fsItemsRepo)
 
 describe('Main', () => {
-    xit('uploadFiscalNoteUsecase', async () => {
+    xit('upload single fiscal note', async () => {
         const url = 'nfce.set.rn.gov.br/portalDFE/NFCe/mDadosNFCeV2.aspx?chNFCe=24230107110635000271651060000638791220983458&Token=F8F7A2D1C38876E554D0028FBBE180E8'
         uploadFiscalNoteUsecase.exec(url)
     });
 
-    xit('uploadFiscalNoteUsecase', async () => {
+    xit('upload multiple fiscal notes', async () => {
         const ids = [
             '24230107110635000271651060000638791220983458',
             '24230107110635000271651070001360981215656707',
@@ -46,10 +46,10 @@ describe('Main', () => {
     });
     
     
-    it('calculateFiscalNoteVariationUsecase', async () => {
+    it('calculate fiscal note variation', async () => {
         const url = 'nfce.set.rn.gov.br/portalDFE/NFCe/mDadosNFCeV2.aspx?chNFCe=24230907110635000271651060000784731426617295&Token=F8F7A2D1C38876E554D0028FBBE180E8'
         const fiscalNote = fiscalNoteCheerioExtractor.extract(await fiscalNoteFsFetcher.fetch(url))
-        console.log(calculateFiscalNoteVariationUsecase.exec(fiscalNote, 3))
+        console.log(calculateFiscalNoteVariationUsecase.exec(fiscalNote, 8))
     });
   })
     
