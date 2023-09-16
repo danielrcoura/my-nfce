@@ -1,10 +1,16 @@
-import FiscalNote, { ItemsPrices } from "../entities/FiscalNote";
+import FiscalNote, { ItemsPrices, FiscalNoteSummary } from "../entities/FiscalNote";
 import ItemsRepo from "../interfaces/ItemsRepo"
+
+type ItemVariation = {
+  name: string
+  variation: number
+  rate: number
+}
 
 type Variation = {
   variation: number
   rate: number
-  itemsVariationRate: number
+  itemsVariation: ItemVariation[]
   missingItems: string[]
 }
 
@@ -13,11 +19,11 @@ export default class CalculateFiscalNoteVartiationUsecase {
 
   exec(fiscalNote: FiscalNote, months: number): Variation {
     const oldItemsPrices = this.getOldItemsPrices(fiscalNote, months)
-    const itemsVariationRate = this.calculateProductsVariationRate(fiscalNote.getItemsPrices(), oldItemsPrices)
+    const itemsVariation = this.calculateItemsVariation(fiscalNote.summary, oldItemsPrices)
     const { variation, rate } = this.calculateFiscalNoteVariation(fiscalNote, oldItemsPrices)
-    const missingItems = this.getMissingItems(fiscalNote.getItemsPrices(), oldItemsPrices)
+    const missingItems = this.getMissingItems(fiscalNote.summary, oldItemsPrices)
 
-    return { variation, rate, itemsVariationRate, missingItems }
+    return { variation, rate, itemsVariation, missingItems }
   }
 
   getOldItemsPrices(fiscalNote: FiscalNote, months: number): ItemsPrices {
@@ -33,21 +39,24 @@ export default class CalculateFiscalNoteVartiationUsecase {
     return dateCopy;
   }
 
-  calculateProductsVariationRate(itemsPrices: ItemsPrices, oldItemsPrices: ItemsPrices): number {
-    let oldTotal = 0
-    let newTotal = 0
-
-    Object.entries(itemsPrices).forEach(([name, price]) => {
+  calculateItemsVariation(fiscalNoteSummary: FiscalNoteSummary, oldItemsPrices: ItemsPrices): ItemVariation[] {
+    const result: ItemVariation[] = []
+    
+    Object.entries(fiscalNoteSummary).forEach(([name, summary]) => {
       if (oldItemsPrices[name]) {
-        oldTotal += oldItemsPrices[name]
-        newTotal += price
+        const variation = summary.price - oldItemsPrices[name]
+        const rate = variation / oldItemsPrices[name]
+        result.push({ name, variation, rate })
       }
     })
 
-    const variation = newTotal - oldTotal
-    const rate = variation / oldTotal
+    result.sort((a, b) => {
+      const weightA = a.variation * fiscalNoteSummary[a.name].quantity
+      const weightB = b.variation * fiscalNoteSummary[b.name].quantity
+      return weightB - weightA
+    })
 
-    return rate
+    return result
   }
 
   calculateFiscalNoteVariation(fiscalNote: FiscalNote, oldItemsPrices: ItemsPrices) {
@@ -67,8 +76,8 @@ export default class CalculateFiscalNoteVartiationUsecase {
     return { variation, rate }
   }
 
-  getMissingItems(itemsPrices: ItemsPrices, oldItems: ItemsPrices): string[] {
+  getMissingItems(fiscalNoteSummary: FiscalNoteSummary, oldItems: ItemsPrices): string[] {
     const oldItemsNames = Object.keys(oldItems)
-    return Object.keys(itemsPrices).filter(name => !oldItemsNames.includes(name))
+    return Object.keys(fiscalNoteSummary).filter(name => !oldItemsNames.includes(name))
   }
 }

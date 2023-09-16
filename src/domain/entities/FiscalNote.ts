@@ -7,14 +7,33 @@ export type Item = {
 
 export type ItemsPrices = Record<string, number>
 
-export default class FiscalNote {
-    constructor(readonly date: Date, readonly items: Item[]) {}
+export type FiscalNoteSummary = Record<string, ItemSummary>
 
-    getItemsPrices() {
-        const itemsPrices: ItemsPrices = {}
-        return this.items.reduce((result, item) => {
-            result[item.name] = item.price
+type ItemSummary = {
+    quantity: number
+    unit: string
+    price: number,
+}
+
+export default class FiscalNote {
+    readonly summary: FiscalNoteSummary
+
+    constructor(readonly date: Date, readonly items: Item[]) {
+        this.summary = this.summarize(items)
+    }
+
+    private summarize(items: Item[]) {
+        return items.reduce((result, item) => {
+            if (result[item.name]) {
+                result[item.name].quantity += item.quantity
+            } else {
+                result[item.name] = {
+                    price: item.price,
+                    quantity: item.quantity,
+                    unit: item.unit,
+                }
+            }
             return result
-        }, itemsPrices)
+        }, {} as Record<string, ItemSummary>)
     }
 }
