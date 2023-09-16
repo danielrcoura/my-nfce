@@ -1,5 +1,5 @@
 import fs from 'fs'
-import FiscalNoteFetcher from '../domain/interfaces/FiscalNoteFetcher'
+import FiscalNoteFetcher from './FiscalNoteFetcher'
 
 const BASE_DIR='/home/satoshi/Documents/mercado-exchange/raw-notes'
 

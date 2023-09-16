@@ -1,14 +1,16 @@
 import FsItemsRepo from '../src/items-repo/FsItemsRepo'
 import FiscalNoteFsFetcher from '../src/scraper/FiscalNoteFsFetcher'
 import FiscalNoteCheerioExtractor from '../src/scraper/FiscalNoteCheerioExtractor'
+import MyFiscalNoteScraper from '../src/scraper/MyFiscalNoteScraper'
 import UploadFiscalNoteUsecase from '../src/domain/usecases/UploadFiscalNote'
 import CalculateFiscalNoteVariationUsecase from '../src/domain/usecases/CalculateFiscalNoteVariation'
 
 const fsItemsRepo = new FsItemsRepo()
 const fiscalNoteFsFetcher = new FiscalNoteFsFetcher()
 const fiscalNoteCheerioExtractor = new FiscalNoteCheerioExtractor()
+const fiscalNoteScraper = new MyFiscalNoteScraper(fiscalNoteFsFetcher, fiscalNoteCheerioExtractor)
 
-const uploadFiscalNoteUsecase = new UploadFiscalNoteUsecase(fiscalNoteFsFetcher, fiscalNoteCheerioExtractor, fsItemsRepo)
+const uploadFiscalNoteUsecase = new UploadFiscalNoteUsecase(fiscalNoteScraper, fsItemsRepo)
 const calculateFiscalNoteVariationUsecase = new CalculateFiscalNoteVariationUsecase(fsItemsRepo)
 
 describe('Main', () => {
@@ -47,8 +49,7 @@ describe('Main', () => {
     it('calculateFiscalNoteVariationUsecase', async () => {
         const url = 'nfce.set.rn.gov.br/portalDFE/NFCe/mDadosNFCeV2.aspx?chNFCe=24230907110635000271651060000784731426617295&Token=F8F7A2D1C38876E554D0028FBBE180E8'
         const fiscalNote = fiscalNoteCheerioExtractor.extract(await fiscalNoteFsFetcher.fetch(url))
-        // console.log(fiscalNote)
-        console.log(calculateFiscalNoteVariationUsecase.exec(fiscalNote, 8))
+        console.log(calculateFiscalNoteVariationUsecase.exec(fiscalNote, 3))
     });
   })
     

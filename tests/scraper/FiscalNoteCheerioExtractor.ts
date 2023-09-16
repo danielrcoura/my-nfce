@@ -1,6 +1,6 @@
 import cheerio, { CheerioAPI } from 'cheerio'
-import FiscalNoteExtractor from "./FiscalNoteExtractor";
-import FiscalNote from '../domain/entities/FiscalNote';
+import FiscalNoteExtractor from "../../src/scraper/FiscalNoteExtractor";
+import FiscalNote from '../../src/domain/entities/FiscalNote';
 
 export default class FiscalNoteCheerioExtractor implements FiscalNoteExtractor {
     extract(html: Buffer): FiscalNote {
