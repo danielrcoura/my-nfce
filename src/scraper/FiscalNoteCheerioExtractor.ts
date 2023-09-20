@@ -55,7 +55,7 @@ export default class FiscalNoteCheerioExtractor implements FiscalNoteExtractor {
                 name: row[1],
                 quantity: parseFloat(row[2].replace(',', '.')),
                 unit: row[3],
-                price: parseFloat(row[5].replace(',', '.')),
+                price: parseFloat(row[4].replace(',', '.')),
             }
             return item
         })
