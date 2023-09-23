@@ -2,7 +2,8 @@ import FiscalNoteFetcher from './FiscalNoteFetcher'
 import puppeteer, { Page } from 'puppeteer';
 import { createWorker } from 'tesseract.js';
 import Jimp from 'jimp';
-
+import cheerio, { CheerioAPI } from 'cheerio'
+import fs from 'fs'
 
 export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
     fetch(url: string): Promise<Buffer> {
@@ -33,6 +34,37 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
         const result = await worker.recognize(image);
         worker.terminate();
         return result.data.text;
+    }
+
+    private async fetchPage(url: string, captcha: string, viewState: string, eventValidation: string, cookies: string): Promise<string> {
+        // const body = `__VIEWSTATE=${viewState}&__EVENTVALIDATION=${eventValidation}&txt_cod_antirobo=${captcha}&__EVENTTARGET=&__EVENTARGUMENT=&__VIEWSTATEGENERATOR=CAFDC37D&__VIEWSTATEENCRYPTED=&btnVerDanfe=Ver+DANFE`
+        const body = `__EVENTTARGET=&__EVENTARGUMENT=&__VIEWSTATE=${encodeURIComponent(viewState)}&__VIEWSTATEGENERATOR=CAFDC37D&__VIEWSTATEENCRYPTED=&__EVENTVALIDATION=${encodeURIComponent(eventValidation)}&txt_cod_antirobo=${captcha}&btnVerDanfe=Ver+DANFE`
+        console.log(body)
+        console.log(cookies)
+        const response = await fetch(url, {
+            "headers": {
+                "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                "accept-language": "en-US,en;q=0.9",
+                "cache-control": "max-age=0",
+                "content-type": "application/x-www-form-urlencoded",
+                "sec-ch-ua": "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Google Chrome\";v=\"114\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Linux\"",
+                "sec-fetch-dest": "document",
+                "sec-fetch-mode": "navigate",
+                "sec-fetch-site": "same-origin",
+                "sec-fetch-user": "?1",
+                "upgrade-insecure-requests": "1",
+                "cookie": cookies,
+                "Referer": url,
+                "Referrer-Policy": "strict-origin-when-cross-origin"
+            },
+            "body": body,
+            "method": "POST"
+        });
+
+        const file = await response.text()
+        return file
     }
 
     private async verifyCaptcha(page: Page, captcha: string) {
@@ -93,33 +125,32 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
         return resultBuffer
     }
 
-    private async breakCaptcha(url: string): Promise<string> {
+    private async breakCaptcha(url: string) {
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
         await page.goto(url);
         const cookies = await page.cookies()
+        const viewState =  await page.$eval('#__VIEWSTATE', el => (el as HTMLInputElement).value);
+        const eventValidation =  await page.$eval('#__EVENTVALIDATION', el => (el as HTMLInputElement).value);
+
         const parsedCookies = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
         const image = await this.fetchCaptchaImage(parsedCookies)
         const improvedImage = await this.improveImage(image)
         const captcha = await this.breakWithTesseract(improvedImage)
 
-        console.table({
-            normal: (await this.breakWithTesseract(image)).replace(/\s/g, ''),
-            jimp: (await this.breakWithTesseract(improvedImage)).replace(/\s/g, '')
-        })
-
-        const cleaned = captcha.replace(/\s/g, '')
-        await this.verifyCaptcha(page, cleaned)
+        const cleanedCaptcha = captcha.replace(/\s/g, '')
+        await this.verifyCaptcha(page, cleanedCaptcha)
+        
         browser.close();
-        return cleaned
-    }
-
-    private async fetchPage(captcha: string) {
-        console.log('my captcha:', captcha)
+        const html = await this.fetchPage(url, cleanedCaptcha, viewState, eventValidation, parsedCookies)
+        fs.writeFileSync('index.html', html)
+        const $ = cheerio.load(html)
+        const tableExists = $('#tbItensList').length
+        console.log(tableExists)
     }
 
     async init(url: string) {        
         const captcha = await this.breakCaptcha(url)
-        return this.fetchPage(captcha)
+        // return this.fetchPage(url, captcha)
     }
 }
