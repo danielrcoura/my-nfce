@@ -2,12 +2,60 @@ import FiscalNoteFetcher from './FiscalNoteFetcher'
 import puppeteer, { Page } from 'puppeteer';
 import { createWorker } from 'tesseract.js';
 import Jimp from 'jimp';
-import cheerio, { CheerioAPI } from 'cheerio'
-import fs from 'fs'
+import cheerio from 'cheerio'
+
+const MAX_RETRIES = 20
+
+type PageData = {
+    cookies: string
+    viewState: string
+    eventValidation: string
+}
 
 export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
-    fetch(url: string): Promise<Buffer> {
-        throw new Error('not implemented')
+    async fetch(url: string): Promise<Buffer> {
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+
+        for (let i = 0; i < MAX_RETRIES; i++) {
+            await page.goto(url);
+            const pageData = await this.extractPageData(page)
+            const captcha = await this.breakCaptcha(pageData)
+            const html = await this.fetchPage(url, pageData, captcha)
+            if (this.isPageValid(html)) {
+                browser.close()
+                return html
+            }
+        }
+
+        browser.close()
+        throw new Error('page is not valid')
+    }
+
+    private isPageValid(html: Buffer): boolean {
+        const $ = cheerio.load(html)
+        const tableExists = $('#tbItensList').length
+        return !!tableExists
+    }
+
+    private async breakCaptcha(pageData: PageData) {
+        const captchaImage = await this.fetchCaptchaImage(pageData.cookies)
+        const improvedImage = await this.improveImage(captchaImage)
+        const captcha = await this.breakWithTesseract(improvedImage)
+        return captcha.replace(/\s/g, '')
+    }
+
+    private async extractPageData(page: Page): Promise<PageData> {
+        const cookies = await page.cookies()
+        const viewState =  await page.$eval('#__VIEWSTATE', el => (el as HTMLInputElement).value);
+        const eventValidation =  await page.$eval('#__EVENTVALIDATION', el => (el as HTMLInputElement).value);
+        const parsedCookies = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
+
+        return {
+            cookies: parsedCookies,
+            viewState,
+            eventValidation
+        }
     }
 
     private async fetchCaptchaImage(cookies: string): Promise<Buffer> {
@@ -36,11 +84,8 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
         return result.data.text;
     }
 
-    private async fetchPage(url: string, captcha: string, viewState: string, eventValidation: string, cookies: string): Promise<string> {
-        // const body = `__VIEWSTATE=${viewState}&__EVENTVALIDATION=${eventValidation}&txt_cod_antirobo=${captcha}&__EVENTTARGET=&__EVENTARGUMENT=&__VIEWSTATEGENERATOR=CAFDC37D&__VIEWSTATEENCRYPTED=&btnVerDanfe=Ver+DANFE`
-        const body = `__EVENTTARGET=&__EVENTARGUMENT=&__VIEWSTATE=${encodeURIComponent(viewState)}&__VIEWSTATEGENERATOR=CAFDC37D&__VIEWSTATEENCRYPTED=&__EVENTVALIDATION=${encodeURIComponent(eventValidation)}&txt_cod_antirobo=${captcha}&btnVerDanfe=Ver+DANFE`
-        console.log(body)
-        console.log(cookies)
+    private async fetchPage(url: string, pageData: PageData, captcha: string): Promise<Buffer> {
+        const body = `__EVENTTARGET=&__EVENTARGUMENT=&__VIEWSTATE=${encodeURIComponent(pageData.viewState)}&__VIEWSTATEGENERATOR=CAFDC37D&__VIEWSTATEENCRYPTED=&__EVENTVALIDATION=${encodeURIComponent(pageData.eventValidation)}&txt_cod_antirobo=${captcha}&btnVerDanfe=Ver+DANFE`
         const response = await fetch(url, {
             "headers": {
                 "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -55,7 +100,7 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
                 "sec-fetch-site": "same-origin",
                 "sec-fetch-user": "?1",
                 "upgrade-insecure-requests": "1",
-                "cookie": cookies,
+                "cookie": pageData.cookies,
                 "Referer": url,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
@@ -63,18 +108,8 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
             "method": "POST"
         });
 
-        const file = await response.text()
-        return file
-    }
-
-    private async verifyCaptcha(page: Page, captcha: string) {
-        await page.evaluate(async (captcha) => {
-            const input = document.querySelector('#txt_cod_antirobo') as HTMLInputElement
-            input!.value = captcha;
-            const button = document.querySelector('#btnVerDanfe') as HTMLButtonElement
-            button.click()
-        }, captcha)
-        await page.screenshot({ path: 'captcha-screenshot.jpg' })
+        const file = await response.arrayBuffer()
+        return Buffer.from(file)
     }
 
     private async improveImage(image: Buffer): Promise<Buffer> {
@@ -123,34 +158,5 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
             })
         })
         return resultBuffer
-    }
-
-    private async breakCaptcha(url: string) {
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
-        await page.goto(url);
-        const cookies = await page.cookies()
-        const viewState =  await page.$eval('#__VIEWSTATE', el => (el as HTMLInputElement).value);
-        const eventValidation =  await page.$eval('#__EVENTVALIDATION', el => (el as HTMLInputElement).value);
-
-        const parsedCookies = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
-        const image = await this.fetchCaptchaImage(parsedCookies)
-        const improvedImage = await this.improveImage(image)
-        const captcha = await this.breakWithTesseract(improvedImage)
-
-        const cleanedCaptcha = captcha.replace(/\s/g, '')
-        await this.verifyCaptcha(page, cleanedCaptcha)
-        
-        browser.close();
-        const html = await this.fetchPage(url, cleanedCaptcha, viewState, eventValidation, parsedCookies)
-        fs.writeFileSync('index.html', html)
-        const $ = cheerio.load(html)
-        const tableExists = $('#tbItensList').length
-        console.log(tableExists)
-    }
-
-    async init(url: string) {        
-        const captcha = await this.breakCaptcha(url)
-        // return this.fetchPage(url, captcha)
     }
 }
