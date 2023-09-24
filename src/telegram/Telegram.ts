@@ -4,7 +4,7 @@ import FsItemsRepo from "../items-repo/FsItemsRepo";
 import FiscalNoteCheerioExtractor from "../scraper/FiscalNoteCheerioExtractor";
 import FiscalNotePupepeteerFetcher from "../scraper/FiscalNotePuppeteerFetcher";
 import MyFiscalNoteScraper from "../scraper/MyFiscalNoteScraper";
-
+import RawFiscalNoteStorageS3 from '../storage/RawFiscalNoteStorageS3';
 
 const token = '6516752254:AAENaVC3Udl_I-MAwdFV8qrKp0by7yojLQk';
 
@@ -14,7 +14,8 @@ const fsItemsRepo = new FsItemsRepo()
 const fiscalNotePupepeteerFetcher = new FiscalNotePupepeteerFetcher()
 const fiscalNoteCheerioExtractor = new FiscalNoteCheerioExtractor()
 const fiscalNoteScraper = new MyFiscalNoteScraper(fiscalNotePupepeteerFetcher, fiscalNoteCheerioExtractor)
-const uploadFiscalNoteUsecase = new UploadFiscalNoteUsecase(fiscalNoteScraper, fsItemsRepo)
+const rawFiscalNoteStorageS3 = new RawFiscalNoteStorageS3()
+const uploadFiscalNoteUsecase = new UploadFiscalNoteUsecase(fiscalNoteScraper, rawFiscalNoteStorageS3, fsItemsRepo)
 
 bot.on('text', async (msg: any) => {
   const chatId = msg.chat.id;

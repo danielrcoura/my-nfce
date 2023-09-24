@@ -6,9 +6,10 @@ export default class FiscalNoteCheerioExtractor implements FiscalNoteExtractor {
     extract(html: Buffer): FiscalNote {
         const $ = cheerio.load(html);
         const date = this.extractDate($)
+        const id = this.extractId($)
         const table = this.extractTable($)
         const cleanedTable = this.cleanTable(table)
-        return this.createFiscalNote(cleanedTable, date)
+        return this.createFiscalNote(cleanedTable, id, date)
     }
 
     private extractTable($: CheerioAPI): string[][] {
@@ -49,7 +50,11 @@ export default class FiscalNoteCheerioExtractor implements FiscalNoteExtractor {
         return new Date(result)
     }
 
-    private createFiscalNote(table: string[][], date: Date): FiscalNote {
+    private extractId($: CheerioAPI): string {
+        return $('#lblChave').text().trim()
+    }
+
+    private createFiscalNote(table: string[][], id: string, date: Date): FiscalNote {
         const items = table.map(row => {
             const item = {
                 name: row[1],
@@ -59,6 +64,6 @@ export default class FiscalNoteCheerioExtractor implements FiscalNoteExtractor {
             }
             return item
         })
-        return new FiscalNote(date, items)
+        return new FiscalNote(id, date, items)
     }
 }

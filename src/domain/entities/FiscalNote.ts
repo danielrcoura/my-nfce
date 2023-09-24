@@ -18,7 +18,7 @@ type ItemSummary = {
 export default class FiscalNote {
     readonly summary: FiscalNoteSummary
 
-    constructor(readonly date: Date, readonly items: Item[]) {
+    constructor(readonly id: string, readonly date: Date, readonly items: Item[]) {
         this.summary = this.summarize(items)
     }
 
