@@ -1,0 +1,34 @@
+/**
+ * @param { import("knex").Knex } knex
+ * @returns { Promise<void> }
+ */
+exports.up = function(knex) {
+  return knex.schema
+    .createTable('fiscal_note', function (table) {
+      table.increments('id');
+      table.dateTime('date').notNullable();
+    })
+    .createTable('item', function (table) {
+      table.increments('id');
+      table.dateTime('name').notNullable();
+    })
+    .createTable('fiscal_note_item', function (table) {
+      table.increments('id');
+      table.integer('fical_note_id').index().references('id').inTable('fiscal_note').notNullable();
+      table.integer('item_id').index().references('id').inTable('item').notNullable();
+      table.double('price').notNullable();
+      table.double('quantity').notNullable();
+      table.string('unity').notNullable();
+    });
+};
+
+/**
+ * @param { import("knex").Knex } knex
+ * @returns { Promise<void> }
+ */
+exports.down = function(knex) {
+  return knex.schema
+    .dropTable("fiscal_note")
+    .dropTable("item")
+    .dropTable("fiscal_note_item");
+};

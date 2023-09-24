@@ -17,7 +17,9 @@
     "cheerio": "^1.0.0-rc.12",
     "install": "^0.13.0",
     "jimp": "^0.22.10",
+    "knex": "^2.5.1",
     "node-telegram-bot-api": "^0.63.0",
+    "pg": "^8.11.3",
     "puppeteer": "^21.3.1",
     "tesseract.js": "^4.1.2"
   },
