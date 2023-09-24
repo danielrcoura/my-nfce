@@ -5,11 +5,13 @@ import Jimp from 'jimp';
 import cheerio from 'cheerio'
 
 const MAX_RETRIES = 20
+const CAPTCHA_LENGTH = 6
 
 type PageData = {
     cookies: string
     viewState: string
     eventValidation: string
+    nfceUrl: string
 }
 
 export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
@@ -21,10 +23,12 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
             await page.goto(url);
             const pageData = await this.extractPageData(page)
             const captcha = await this.breakCaptcha(pageData)
-            const html = await this.fetchPage(url, pageData, captcha)
-            if (this.isPageValid(html)) {
-                browser.close()
-                return html
+            if (captcha.length === CAPTCHA_LENGTH) {
+                const html = await this.fetchPage(pageData, captcha)
+                if (this.isPageValid(html)) {
+                    browser.close()
+                    return html
+                }
             }
         }
 
@@ -47,14 +51,16 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
 
     private async extractPageData(page: Page): Promise<PageData> {
         const cookies = await page.cookies()
+        const parsedCookies = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
         const viewState =  await page.$eval('#__VIEWSTATE', el => (el as HTMLInputElement).value);
         const eventValidation =  await page.$eval('#__EVENTVALIDATION', el => (el as HTMLInputElement).value);
-        const parsedCookies = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join('; ')
+        const nfceUrl =  await page.$eval('#form1', el => (el as HTMLFormElement).action);
 
         return {
             cookies: parsedCookies,
             viewState,
-            eventValidation
+            eventValidation,
+            nfceUrl,
         }
     }
 
@@ -84,9 +90,10 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
         return result.data.text;
     }
 
-    private async fetchPage(url: string, pageData: PageData, captcha: string): Promise<Buffer> {
+    private async fetchPage(pageData: PageData, captcha: string): Promise<Buffer> {
         const body = `__EVENTTARGET=&__EVENTARGUMENT=&__VIEWSTATE=${encodeURIComponent(pageData.viewState)}&__VIEWSTATEGENERATOR=CAFDC37D&__VIEWSTATEENCRYPTED=&__EVENTVALIDATION=${encodeURIComponent(pageData.eventValidation)}&txt_cod_antirobo=${captcha}&btnVerDanfe=Ver+DANFE`
-        const response = await fetch(url, {
+        
+        const response = await fetch(pageData.nfceUrl, {
             "headers": {
                 "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 "accept-language": "en-US,en;q=0.9",
@@ -101,13 +108,13 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
                 "sec-fetch-user": "?1",
                 "upgrade-insecure-requests": "1",
                 "cookie": pageData.cookies,
-                "Referer": url,
+                "Referer": pageData.nfceUrl,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
             "body": body,
             "method": "POST"
         });
-
+        
         const file = await response.arrayBuffer()
         return Buffer.from(file)
     }

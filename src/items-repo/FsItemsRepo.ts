@@ -44,12 +44,12 @@ export default class FsItemsRepo implements ItemsRepo {
         const dbItems = this.getAll()
         const newData = fiscalNote.items.map(i => ({ ...i , date: fiscalNote.date.toISOString() }))
         dbItems.push(...newData)
-        return fs.promises.writeFile(__dirname + '/database.json', JSON.stringify(dbItems, null, 2))
+        return fs.promises.writeFile('database.json', JSON.stringify(dbItems, null, 2))
     }
     
     private getAll(): DbItem[] {
         try {
-            const buffer = fs.readFileSync(__dirname + '/database.json')
+            const buffer = fs.readFileSync('database.json')
             return JSON.parse(buffer.toString()) as DbItem[]
         } catch {
             return []

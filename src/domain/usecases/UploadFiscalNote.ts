@@ -14,6 +14,6 @@ export default class UploadFiscalNoteUsecase {
     }
 
     private async saveHtml(html: Buffer): Promise<void> {
-        // TODO: store html
+        console.log('saving html...', html)
     }
 }
