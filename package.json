@@ -7,7 +7,10 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "start": "nodemon src/telegram/Telegram.ts"
+    "start": "nodemon src/telegram/Telegram.ts",
+    "migrate:latest": "knex --knexfile knexfile.ts migrate:latest",
+    "migrate:up": "knex --knexfile knexfile.ts migrate:up",
+    "migrate:down": "knex --knexfile knexfile.ts migrate:down"
   },
   "keywords": [],
   "author": "",

@@ -6,6 +6,7 @@ exports.up = function(knex) {
   return knex.schema
     .createTable('fiscal_note', function (table) {
       table.increments('id');
+      table.string('key').notNullable();
       table.dateTime('date').notNullable();
     })
     .createTable('item', function (table) {
@@ -28,7 +29,7 @@ exports.up = function(knex) {
  */
 exports.down = function(knex) {
   return knex.schema
+    .dropTable("fiscal_note_item")
     .dropTable("fiscal_note")
     .dropTable("item")
-    .dropTable("fiscal_note_item");
 };
