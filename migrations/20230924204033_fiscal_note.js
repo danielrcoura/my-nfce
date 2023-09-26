@@ -6,12 +6,12 @@ exports.up = function(knex) {
   return knex.schema
     .createTable('fiscal_note', function (table) {
       table.increments('id');
-      table.string('key').notNullable();
+      table.string('key').notNullable().unique();
       table.dateTime('date').notNullable();
     })
     .createTable('item', function (table) {
       table.increments('id');
-      table.dateTime('name').notNullable();
+      table.string('name').notNullable().unique();
     })
     .createTable('fiscal_note_item', function (table) {
       table.increments('id');
