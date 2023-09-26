@@ -46,10 +46,16 @@ export default class ItemsKnexRepo implements ItemsRepo {
 	}
 
 	private async getOrCreateSingleItem(trx: Knex.Transaction, item: Item) {
-		let result = await trx('item').where('name', item.name)
+		let result = await trx('item')
+			.insert({ name: item.name })
+			.onConflict(['name'])
+			.ignore()
+			.returning(['id', 'name'])
+		
 		if (result.length === 0) {
-			result = await trx('item').insert({ name: item.name }, ['id', 'name'])
+			result = await trx('item').where('name', item.name)
 		}
+
 		return result[0]
 	}
 
