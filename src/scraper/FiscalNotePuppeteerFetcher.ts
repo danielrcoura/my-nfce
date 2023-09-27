@@ -156,10 +156,7 @@ export default class FiscalNotePupepeteerFetcher implements FiscalNoteFetcher {
                 });
 
                 newImage.blur(4)
-
-                
             
-            newImage.write("jimp.jpg"); // save
             const buffer = await newImage.getBufferAsync(Jimp.MIME_JPEG)
             resolve(buffer)
             })
