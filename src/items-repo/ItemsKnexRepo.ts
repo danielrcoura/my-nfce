@@ -1,16 +1,17 @@
 import knex, { Knex } from "knex";
 import FiscalNote, { Item, ItemsPrices } from "../domain/entities/FiscalNote";
 import ItemsRepo from "../domain/interfaces/ItemsRepo";
+import config from "../config";
 
 // TODO: create a pool
 // TODO: db.destroy()
 const db = knex({
 	client: 'postgresql',
 	connection: {
-		host: 'localhost',
-		database: 'fiscal_note',
-		user:     'postgres',
-		password: 'postgres'
+		host: config.dbHost,
+		database: config.dbDatabase,
+		user:     config.dbUser,
+		password: config.dbPassword
 	},
 	pool: {
 		min: 2,

@@ -1,15 +1,13 @@
 import TelegramBot from 'node-telegram-bot-api';
 import UploadFiscalNoteUsecase from "../domain/usecases/UploadFiscalNote";
-import FsItemsRepo from "../items-repo/FsItemsRepo";
 import FiscalNoteCheerioExtractor from "../scraper/FiscalNoteCheerioExtractor";
 import FiscalNotePupepeteerFetcher from "../scraper/FiscalNotePuppeteerFetcher";
 import MyFiscalNoteScraper from "../scraper/MyFiscalNoteScraper";
 import RawFiscalNoteStorageS3 from '../storage/RawFiscalNoteStorageS3';
 import ItemsKnexRepo from '../items-repo/ItemsKnexRepo';
+import config from '../config';
 
-const token = '6516752254:AAENaVC3Udl_I-MAwdFV8qrKp0by7yojLQk';
-
-const bot = new TelegramBot(token, {polling: true});
+const bot = new TelegramBot(config.telegramToken, {polling: true});
 
 const itemsKnexRepo = new ItemsKnexRepo()
 const fiscalNotePupepeteerFetcher = new FiscalNotePupepeteerFetcher()
