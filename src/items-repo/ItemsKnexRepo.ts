@@ -1,6 +1,6 @@
 import knex, { Knex } from "knex";
 import FiscalNote, { Item, ItemsPrices } from "../domain/entities/FiscalNote";
-import ItemsRepo, { ItemDataPoint } from "../domain/interfaces/ItemsRepo";
+import ItemsRepo, { CategoryTotal, ItemDataPoint } from "../domain/interfaces/ItemsRepo";
 import config from "../config";
 
 // TODO: create a pool
@@ -91,6 +91,19 @@ export default class ItemsKnexRepo implements ItemsRepo {
 			.select(
 				db.raw("date_trunc('day', fiscal_note.date) as date"), 
 				db.raw("max(fiscal_note_item.price)")
+			)
+	}
+
+	async summariseByCategory(key: string): Promise<CategoryTotal[]> {
+		return db('fiscal_note')
+			.join('fiscal_note_item', 'fiscal_note.id', 'fiscal_note_item.fiscal_note_id')
+			.join('item', 'item.id', 'fiscal_note_item.item_id')
+			.where('fiscal_note.key', key)
+			.groupBy('item.category')
+			.orderByRaw('2 desc')
+			.select(
+				"item.category as name", 
+				db.raw('SUM(fiscal_note_item.price) as total')
 			)
 	}
 }

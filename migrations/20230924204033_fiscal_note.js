@@ -12,6 +12,7 @@ exports.up = function(knex) {
     .createTable('item', function (table) {
       table.increments('id');
       table.string('name').notNullable().unique();
+      table.string('category');
     })
     .createTable('fiscal_note_item', function (table) {
       table.increments('id');

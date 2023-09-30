@@ -5,8 +5,14 @@ export type ItemDataPoint = {
 	price: number
 }
 
+export type CategoryTotal = {
+    name: string
+    total: number
+}
+
 export default interface ItemsRepo {
     getMonthMedianItemsPrices(items: string[], date: Date): ItemsPrices
     save(fiscalNote: FiscalNote): Promise<void>
     getItemTimeline(id: number): Promise<ItemDataPoint[]>
+    summariseByCategory(key: string): Promise<CategoryTotal[]>
 }
