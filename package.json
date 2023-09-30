@@ -7,7 +7,8 @@
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
-    "start": "nodemon src/telegram/Telegram.ts",
+    "dev": "nodemon src/telegram/Telegram.ts",
+    "build": "tsc -p .",
     "migrate:latest": "knex --knexfile knexfile.ts migrate:latest",
     "migrate:up": "knex --knexfile knexfile.ts migrate:up",
     "migrate:down": "knex --knexfile knexfile.ts migrate:down"
