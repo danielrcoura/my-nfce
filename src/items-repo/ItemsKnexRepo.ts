@@ -1,6 +1,6 @@
 import knex, { Knex } from "knex";
 import FiscalNote, { Item, ItemsPrices } from "../domain/entities/FiscalNote";
-import ItemsRepo from "../domain/interfaces/ItemsRepo";
+import ItemsRepo, { ItemDataPoint } from "../domain/interfaces/ItemsRepo";
 import config from "../config";
 
 // TODO: create a pool
@@ -72,7 +72,7 @@ export default class ItemsKnexRepo implements ItemsRepo {
 	async createFiscalNoteItems(trx: Knex.Transaction, fiscalNote: FiscalNote, fiscalNoteId: number, itemsIds: Record<string, number>) {
 		const fiscalNoteItems = fiscalNote.items.map(item => {
 			return {
-				fical_note_id: fiscalNoteId,
+				fiscal_note_id: fiscalNoteId,
 				item_id: itemsIds[item.name],
 				price: item.price,
 				quantity: item.quantity,
@@ -80,5 +80,17 @@ export default class ItemsKnexRepo implements ItemsRepo {
 			}
 		})
 		return trx('fiscal_note_item').insert(fiscalNoteItems)
+	}
+
+	async getItemTimeline(id: number): Promise<ItemDataPoint[]> {
+		return db('fiscal_note_item')
+			.join('fiscal_note', 'fiscal_note.id', 'fiscal_note_item.fiscal_note_id')
+			.where('fiscal_note_item.item_id', id)
+			.groupByRaw('1')
+			.orderByRaw('1')
+			.select(
+				db.raw("date_trunc('day', fiscal_note.date) as date"), 
+				db.raw("max(fiscal_note_item.price)")
+			)
 	}
 }

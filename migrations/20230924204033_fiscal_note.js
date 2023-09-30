@@ -15,7 +15,7 @@ exports.up = function(knex) {
     })
     .createTable('fiscal_note_item', function (table) {
       table.increments('id');
-      table.integer('fical_note_id').index().references('id').inTable('fiscal_note').notNullable();
+      table.integer('fiscal_note_id').index().references('id').inTable('fiscal_note').notNullable();
       table.integer('item_id').index().references('id').inTable('item').notNullable();
       table.double('price').notNullable();
       table.double('quantity').notNullable();
