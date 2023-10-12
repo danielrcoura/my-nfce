@@ -1,6 +1,6 @@
 import knex, { Knex } from "knex";
 import FiscalNote, { Item, ItemsPrices } from "../domain/entities/FiscalNote";
-import ItemsRepo, { CategoryTotal, ItemDataPoint } from "../domain/interfaces/ItemsRepo";
+import ItemsRepo, { CategoryTotal, ItemDataPoint, LastItemPriceDTO } from "../domain/interfaces/ItemsRepo";
 import config from "../config";
 
 // TODO: create a pool
@@ -106,4 +106,43 @@ export default class ItemsKnexRepo implements ItemsRepo {
 				db.raw('SUM(fiscal_note_item.price) as total')
 			)
 	}
+
+	async getLastItemsPrices(key: string): Promise<LastItemPriceDTO[]> {
+		const result = await db.raw(`
+			with
+			items_dates as (
+				select
+					item.id,
+					item.name,
+					avg(fn_item_1.price) as current_price,
+					max(fn_2.date) as last_date
+				from fiscal_note_item as fn_item_1
+					join fiscal_note_item as fn_item_2 on fn_item_1.item_id = fn_item_2.item_id
+					join fiscal_note as fn_1 on fn_item_1.fiscal_note_id = fn_1.id
+					join fiscal_note as fn_2 on fn_item_2.fiscal_note_id = fn_2.id
+					join item on fn_item_1.item_id = item.id
+				where
+					fn_1.key = ?
+					and date_trunc('day', fn_2.date) < date_trunc('day', fn_1.date)
+				group by item.id
+			)
+			select
+				items_dates.name,
+				items_dates.current_price,
+				items_dates.last_date,
+				avg(fni.price) as last_price
+			from items_dates
+				join fiscal_note_item fni on items_dates.id = fni.item_id
+				join fiscal_note on fni.fiscal_note_id = fiscal_note.id
+			where
+				items_dates.last_date = fiscal_note.date
+			group by
+				items_dates.name,
+				items_dates.last_date,
+				items_dates.current_price
+		`, [key])
+		
+		return result.rows
+	}
 }
+

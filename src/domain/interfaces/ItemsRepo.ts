@@ -10,9 +10,16 @@ export type CategoryTotal = {
     total: number
 }
 
+export type LastItemPriceDTO = {
+    name: string,
+    last_price: number,
+    last_date: Date
+}
+
 export default interface ItemsRepo {
     getMonthMedianItemsPrices(items: string[], date: Date): ItemsPrices
     save(fiscalNote: FiscalNote): Promise<void>
     getItemTimeline(id: number): Promise<ItemDataPoint[]>
     summariseByCategory(key: string): Promise<CategoryTotal[]>
+    getLastItemsPrices(key: string): Promise<LastItemPriceDTO[]>
 }
